@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 常見問題動態雲端測驗</title>
+    <!-- Google Fonts: Cactus Classical Serif 字體 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cactus+Classical+Serif&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg-color: #f0f2f5;
+            --card-bg: #ffffff;
+            --text-color: #1f2937;
+            --correct-color: #10b981;
+            --incorrect-color: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            /* 套用 Cactus Classical Serif 字體 */
+            font-family: 'Cactus Classical Serif', serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 1rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .quiz-container {
+            background-color: var(--card-bg);
+            width: 100%;
+            max-width: 650px;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+        }
+
+        h1 {
+            margin-top: 0;
+            font-size: clamp(1.25rem, 4vw, 1.75rem);
+            color: var(--primary-color);
+            text-align: center;
+            margin-bottom: 1.2rem;
+        }
+
+        .quiz-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.2rem;
+            font-size: 0.95rem;
+            color: #6b7280;
+            border-bottom: 1px solid #e5e7eb;
+            padding-bottom: 0.75rem;
+        }
+
+        .question-text {
+            font-size: clamp(1.05rem, 3vw, 1.25rem);
+            font-weight: 700;
+            margin-bottom: 1.2rem;
+            line-height: 1.5;
+        }
+
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-bottom: 1.2rem;
+        }
+
+        .option-btn {
+            background-color: #f9fafb;
+            border: 2px solid #e5e7eb;
+            padding: 0.875rem 1rem;
+            text-align: left;
+            border-radius: 0.5rem;
+            font-size: clamp(0.95rem, 2.5vw, 1.05rem);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: var(--text-color);
+            width: 100%;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            background-color: #f3f4f6;
+            border-color: var(--primary-color);
+        }
+
+        .option-btn.correct {
+            background-color: #d1fae5;
+            border-color: var(--correct-color);
+            color: #065f46;
+            font-weight: 600;
+        }
+
+        .option-btn.incorrect {
+            background-color: #fee2e2;
+            border-color: var(--incorrect-color);
+            color: #991b1b;
+            font-weight: 600;
+        }
+
+        .option-btn:disabled {
+            cursor: not-allowed;
+        }
+
+        .feedback-section {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .feedback-text {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .feedback-text.correct {
+            color: var(--correct-color);
+        }
+
+        .feedback-text.incorrect {
+            color: var(--incorrect-color);
+        }
+
+        .action-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-left: auto;
+        }
+
+        .action-btn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .result-container {
+            text-align: center;
+            display: none;
+        }
+
+        .result-score {
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin: 1rem 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="quiz-container">
+        <h1>☁️ 雲端題庫測驗系統</h1>
+        
+        <div id="quiz-box">
+            <div class="quiz-header">
+                <span id="question-progress">正在從雲端載入題庫...</span>
+                <span id="score-tracker">目前得分：0</span>
+            </div>
+            
+            <div class="question-text" id="question-text">請稍候，正在連線至 Google 試算表...</div>
+            
+            <div class="options-container" id="options-container"></div>
+
+            <div class="feedback-section">
+                <div class="feedback-text" id="feedback-text"></div>
+                <button class="action-btn" id="next-btn" style="display: none;" onclick="nextQuestion()">下一題</button>
+            </div>
+        </div>
+
+        <div class="result-container" id="result-container">
+            <h2>測驗已完成！</h2>
+            <p>本次隨機抽題得分為：</p>
+            <div class="result-score" id="final-score">0 / 5</div>
+            <p id="result-message" style="margin-bottom: 1.5rem; color: #4b5563;"></p>
+            <button class="action-btn" style="margin: 0 auto; display: block;" onclick="initQuiz()">再次挑戰</button>
+        </div>
+    </div>
+
+    <script>
+        let allQuestions = [];
+        let selectedQuestions = [];
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let answered = false;
+
+        const questionProgress = document.getElementById("question-progress");
+        const scoreTracker = document.getElementById("score-tracker");
+        const questionText = document.getElementById("question-text");
+        const optionsContainer = document.getElementById("options-container");
+        const feedbackText = document.getElementById("feedback-text");
+        const nextBtn = document.getElementById("next-btn");
+        const quizBox = document.getElementById("quiz-box");
+        const resultContainer = document.getElementById("result-container");
+        const finalScore = document.getElementById("final-score");
+        const resultMessage = document.getElementById("result-message");
+
+        // 從 Google 試算表讀取 CSV
+        async function loadGoogleSheet() {
+            // 👇 請將下方引號內的網址替換成你的 Google 試算表發布 CSV 網址
+            const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQpHxa08V7ttO7XBvlS95iwE-E_KzOx62daMIVJmxkBWc05awxze_J1N05xdLagbJEFnwcc_1343h8w/pub?output=csv';
+
+            try {
+                const response = await fetch(csvUrl);
+                const data = await response.text();
+                parseCSV(data);
+                initQuiz();
+            } catch (error) {
+                questionText.textContent = "無法讀取雲端試算表，請確認網路連線或確認 CSV 連結是否正確公開發布。";
+                console.error("讀取 Google 試算表錯誤:", error);
+            }
+        }
+
+        // 解析 CSV 資料
+        function parseCSV(text) {
+            const lines = text.trim().split('\n');
+            allQuestions = [];
+            
+            for (let i = 1; i < lines.length; i++) {
+                const row = parseCSVRow(lines[i]);
+                if (row.length >= 6) {
+                    allQuestions.push({
+                        question: row[0],
+                        options: [row[1], row[2], row[3], row[4]],
+                        answer: parseInt(row[5])
+                    });
+                }
+            }
+        }
+
+        function parseCSVRow(row) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+            
+            for (let i = 0; i < row.length; i++) {
+                const char = row[i];
+                if (char === '"') {
+                    inQuotes = !inQuotes;
+                } else if (char === ',' && !inQuotes) {
+                    result.push(current.trim().replace(/^"|"$/g, ''));
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            result.push(current.trim().replace(/^"|"$/g, ''));
+            return result;
+        }
+
+        // 初始化或重新測驗（每次隨機抽出 5 題）
+        function initQuiz() {
+            if (allQuestions.length === 0) {
+                questionText.textContent = "試算表中目前沒有任何題目，請老師先去新增資料！";
+                return;
+            }
+
+            currentQuestionIndex = 0;
+            score = 0;
+            quizBox.style.display = "block";
+            resultContainer.style.display = "none";
+
+            let shuffled = [...allQuestions].sort(() => 0.5 - Math.random());
+            let pickCount = Math.min(5, shuffled.length);
+            selectedQuestions = shuffled.slice(0, pickCount);
+
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            answered = false;
+            feedbackText.textContent = "";
+            nextBtn.style.display = "none";
+            
+            const currentQ = selectedQuestions[currentQuestionIndex];
+            questionProgress.textContent = `題目 ${currentQuestionIndex + 1} / ${selectedQuestions.length}`;
+            scoreTracker.textContent = `目前得分：${score}`;
+            questionText.textContent = currentQ.question;
+
+            optionsContainer.innerHTML = "";
+            currentQ.options.forEach((option, index) => {
+                const btn = document.createElement("button");
+                btn.classList.add("option-btn");
+                btn.textContent = `${String.fromCharCode(65 + index)}.  ${option}`;
+                btn.onclick = () => selectOption(index, btn);
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        function selectOption(selectedIndex, selectedBtn) {
+            if (answered) return; 
+            answered = true;
+
+            const currentQ = selectedQuestions[currentQuestionIndex];
+            const allOptionBtns = optionsContainer.querySelectorAll(".option-btn");
+
+            allOptionBtns.forEach(btn => btn.disabled = true);
+
+            if (selectedIndex === currentQ.answer) {
+                selectedBtn.classList.add("correct");
+                feedbackText.textContent = "回答正確！ 🎉";
+                feedbackText.className = "feedback-text correct";
+                score++;
+                scoreTracker.textContent = `目前得分：${score}`;
+            } else {
+                selectedBtn.classList.add("incorrect");
+                allOptionBtns[currentQ.answer].classList.add("correct");
+                feedbackText.textContent = "回答錯誤！ ❌";
+                feedbackText.className = "feedback-text incorrect";
+            }
+
+            nextBtn.style.display = "inline-block";
+            if (currentQuestionIndex === selectedQuestions.length - 1) {
+                nextBtn.textContent = "看結果";
+            } else {
+                nextBtn.textContent = "下一題";
+            }
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < selectedQuestions.length) {
+                loadQuestion();
+            } else {
+                showResult();
+            }
+        }
+
+        function showResult() {
+            quizBox.style.display = "none";
+            resultContainer.style.display = "block";
+            finalScore.textContent = `${score} / ${selectedQuestions.length}`;
+
+            let message = "";
+            const percentage = (score / selectedQuestions.length) * 100;
+            if (percentage === 100) {
+                message = "太神啦！全部答對，表現完美！🏆";
+            } else if (percentage >= 60) {
+                message = "表現很棒！觀念掌握得不錯！👏";
+            } else {
+                message = "再接再厲！多練習幾次就會更熟練喔！💪";
+            }
+            resultMessage.textContent = message;
+        }
+
+        // 啟動時讀取雲端試算表
+        loadGoogleSheet();
+    </script>
+</body>
+</html>
